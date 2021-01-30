@@ -1,0 +1,15 @@
+version: '3.4'
+services:
+  cppapp:
+    entrypoint: /bin/bash
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - USERNAME=caleb
+    command:  -c "sleep infinity"
+    user: caleb
+    volumes:
+      - ./:/Project
+    ports: 
+      - 8080:8080
