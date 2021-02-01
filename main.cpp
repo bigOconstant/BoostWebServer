@@ -46,6 +46,46 @@ public:
         check_deadline();
     }
 
+    void encode(std::string& data) {
+        std::string buffer;
+        buffer.reserve(data.size());
+        for(size_t pos = 0; pos != data.size(); ++pos) {
+            switch(data[pos]) {
+                case '&':  buffer.append("&amp;");       break;
+                case '\"': buffer.append("&quot;");      break;
+                case '\'': buffer.append("&apos;");      break;
+                case '<':  buffer.append("&lt;");        break;
+                case '>':  buffer.append("&gt;");        break;
+                default:   buffer.append(&data[pos], 1); break;
+            }
+        }
+        data.swap(buffer);
+    }
+
+    std::string GetDataFromRequest(std::string input,std::string st){
+        std::string result;
+        std::istringstream iss(input);
+        for (std::string line; std::getline(iss, line); )
+            {
+                if(line.size() > st.size()){
+                    if (line.substr(0,st.size()) == st){
+                        int pos = line.find("=");
+                        std::cout<<line.size()<<std::endl;
+                        
+                        if(pos > -1 && pos < line.size()){
+                            std::cout<<"found line:"<<line<<std::endl;
+                            std::string value = line.substr(line.find("=")+1,line.size());
+                            
+                            std::cout<<"value:"<<value<<":"<<std::endl;
+                            return value; 
+                        }
+                    }
+                }
+            }
+
+        return "";
+    }
+
 private:
     // The socket for the currently connected client.
     tcp::socket socket_;
@@ -97,6 +137,11 @@ private:
             create_response();
             break;
 
+        case http::verb::post:
+            response_.result(http::status::ok);
+            response_.set(http::field::server, "Beast");
+            create_response();
+            break;
         default:
             // We return responses indicating an error if
             // we do not recognize the request method.
@@ -116,9 +161,40 @@ private:
     void
     create_response()
     {
-        if (request_.target() == "/"){
+        if (request_.target() == "/") {
+            std::string value = "";
+            if (request_.method() == http::verb::post) {
+                std::ostringstream oss;
+                oss << request_;
+                std::string item = oss.str();
+                value = GetDataFromRequest(item,"item");
+                std::cout<<"post"<<item<<std::endl;
+            }
+            std::string page = R""""(
+                <!DOCTYPE html>
+                    <html>
+                    <body>
+
+                    <h2>HTML Forms</h2>
+
+                    )"""";
+                    page +="<p>"+value+"</p>";
+                    page += R""""(
+                    <form  action="/" method="POST">
+                    <label for="fname">First name:</label><br>
+                    <input type="text" id="item" name="item" value="caleb"><br>
+                    
+                    <input type="submit" value="Submit">
+                    </form> 
+
+                    <p>submit.</p>
+
+                    </body>
+                    </html>
+                )"""";
             response_.set(http::field::content_type,"text/html");
-            beast::ostream(response_.body()) <<"<p> go to /count or /time </p>\n";
+            std::cout<<"item:"<<request_<<std::endl;
+            beast::ostream(response_.body()) <<page<<request_.method() <<request_["item"]<<"\n";
         }
         else if(request_.target() == "/count")
         {
