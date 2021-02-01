@@ -8,6 +8,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <boost/network/protocol/http/server.hpp>
 
 namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace http = beast::http;           // from <boost/beast/http.hpp>
@@ -62,21 +63,21 @@ public:
         data.swap(buffer);
     }
 
-    std::string GetDataFromRequest(std::string input,std::string st){
+    std::string GetDataFromPostRequest(std::string input,std::string key){
         std::string result;
         std::istringstream iss(input);
         for (std::string line; std::getline(iss, line); )
             {
-                if(line.size() > st.size()){
-                    if (line.substr(0,st.size()) == st){
+                if(line.size() > key.size()){
+                    if (line.substr(0,key.size()) == key){
                         int pos = line.find("=");
                         std::cout<<line.size()<<std::endl;
                         
                         if(pos > -1 && pos < line.size()){
                             std::cout<<"found line:"<<line<<std::endl;
                             std::string value = line.substr(line.find("=")+1,line.size());
-                            
-                            std::cout<<"value:"<<value<<":"<<std::endl;
+                            // found how here https://stackoverflow.com/a/25335173
+                            value = boost::network::uri::decoded(value);
                             return value; 
                         }
                     }
@@ -167,7 +168,7 @@ private:
                 std::ostringstream oss;
                 oss << request_;
                 std::string item = oss.str();
-                value = GetDataFromRequest(item,"item");
+                value = GetDataFromPostRequest(item,"item");
                 std::cout<<"post"<<item<<std::endl;
             }
             std::string page = R""""(

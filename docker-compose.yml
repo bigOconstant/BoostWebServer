@@ -7,6 +7,7 @@ services:
       dockerfile: Dockerfile
       args:
         - USERNAME=caleb
+      network: host
     command:  -c "sleep infinity"
     user: caleb
     volumes:

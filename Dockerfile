@@ -1,9 +1,10 @@
-from debian:latest
-
+from ubuntu:latest
+RUN apt-cache search clang
 RUN apt-get update
 RUN echo "update"
 RUN apt-get upgrade -y
 
+RUN apt-cache search clang
 #install developer dependencies
 RUN apt-get install clang -y
 RUN apt-get install cmake -y
@@ -43,6 +44,8 @@ RUN groupadd --gid $USER_GID $USERNAME \
 USER $USERNAME
 
 RUN sudo chown -R $USERNAME /vcpkg 
+
+RUN /vcpkg/vcpkg install cpp-netlib
 # set work directory for project
 WORKDIR /Project
 
